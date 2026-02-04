@@ -115,6 +115,13 @@ function closeLoginModal() {
     const modal = document.getElementById('loginModal');
     if (modal) {
         modal.style.display = 'none';
+        // Clear form fields
+        document.getElementById('loginUsername').value = '';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('regUsername').value = '';
+        document.getElementById('regEmail').value = '';
+        document.getElementById('regPassword').value = '';
+        document.getElementById('regFullName').value = '';
     }
 }
 
@@ -129,7 +136,7 @@ function showLoginForm() {
 }
 
 async function handleLogin() {
-    const username = document.getElementById('loginUsername').value;
+    const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
 
     if (!username || !password) {
@@ -143,6 +150,10 @@ async function handleLogin() {
             body: JSON.stringify({ username, password })
         });
 
+        if (!response || !response.access_token) {
+            throw new Error('Invalid response from server');
+        }
+
         setAuthToken(response.access_token);
 
         // Fetch user profile
@@ -154,20 +165,33 @@ async function handleLogin() {
         checkAuth();
 
         // Reload page data
-        location.reload();
+        setTimeout(() => {
+            location.reload();
+        }, 500);
     } catch (error) {
-        showAlert(error.message || 'Login failed', 'error');
+        console.error('Login error:', error);
+        showAlert(error.message || 'Login failed. Please check your credentials.', 'error');
     }
 }
 
 async function handleRegister() {
-    const username = document.getElementById('regUsername').value;
-    const email = document.getElementById('regEmail').value;
+    const username = document.getElementById('regUsername').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
     const password = document.getElementById('regPassword').value;
-    const fullName = document.getElementById('regFullName').value;
+    const fullName = document.getElementById('regFullName').value.trim();
 
     if (!username || !email || !password) {
         showAlert('Please fill in all required fields', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showAlert('Password must be at least 6 characters long', 'error');
+        return;
+    }
+
+    if (!email.includes('@')) {
+        showAlert('Please enter a valid email address', 'error');
         return;
     }
 
@@ -183,9 +207,15 @@ async function handleRegister() {
         });
 
         showAlert('Registration successful! Please login.', 'success');
+        // Clear form
+        document.getElementById('regUsername').value = '';
+        document.getElementById('regEmail').value = '';
+        document.getElementById('regPassword').value = '';
+        document.getElementById('regFullName').value = '';
         showLoginForm();
     } catch (error) {
-        showAlert(error.message || 'Registration failed', 'error');
+        console.error('Registration error:', error);
+        showAlert(error.message || 'Registration failed. Username or email may already be taken.', 'error');
     }
 }
 
